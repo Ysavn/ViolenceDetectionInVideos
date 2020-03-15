@@ -52,6 +52,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
             for inputs, labels, optical_flow in dataloaders[phase]:
                 inputs = inputs.to(device)
                 labels = labels.to(device)
+                optical_flow = optical_flow.to(device)
 
                 # zero the parameter gradients
                 optimizer.zero_grad()
@@ -76,6 +77,7 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
                         output_interim = output_interim * optical_flow
                         model_avg_pool = nn.Sequential(*list(model.children())[-2:-1])
                         output_interim2 = model_avg_pool(output_interim)
+                        #print(output_interim2.shape)
                         output_interim2 = output_interim2.reshape(output_interim2.shape[0], -1)
                         model_fc = nn.Sequential(*list(model.children())[-1:])
                         outputs = model_fc(output_interim2)
@@ -120,12 +122,12 @@ def train_model(model, dataloaders, criterion, optimizer, num_epochs=25, is_ince
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-src_train_fight_path = 'RWF-2000-CroppedOpticalFlow/train/Fight/'
-src_train_non_fight_path = 'RWF-2000-CroppedOpticalFlow/train/NonFight/'
+src_train_fight_path = '/content/drive/My Drive/RWF-2000-CroppedOpticalFlow/train/Fight/'
+src_train_non_fight_path = '/content/drive/My Drive/RWF-2000-CroppedOpticalFlow/train/NonFight/'
 
 #validation data path
-src_val_fight_path = 'RWF-2000-CroppedOpticalFlow/val/Fight/'
-src_val_non_fight_path = 'RWF-2000-CroppedOpticalFlow/val/NonFight/'
+src_val_fight_path = '/content/drive/My Drive/RWF-2000-CroppedOpticalFlow/val/Fight/'
+src_val_non_fight_path = '/content/drive/My Drive/RWF-2000-CroppedOpticalFlow/val/NonFight/'
 
 num_train_data = len(os.listdir(src_train_fight_path)) + len(os.listdir(src_train_non_fight_path))
 num_val_data = len(os.listdir(src_val_fight_path)) + len(os.listdir(src_val_non_fight_path))
@@ -202,9 +204,13 @@ X_val = np.asarray(r1)
 y_val = np.asarray(r2)
 
 
+# Detect if we have a GPU available
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 feature_extract = True
 model_ft, input_size = initialize_model(2, feature_extract, True)
-#model_ft.cuda()
+torch.cuda.set_device(device)
+model_ft.cuda()
 # Data augmentation and normalization for training
 # Just normalization for validation
 data_transforms = {
@@ -253,8 +259,6 @@ dataloaders_dict['val'] = torch.utils.data.DataLoader(train_dataset, batch_size=
 #inputs, labels, _ = Variable(inputs), Variable(labels)
 #outputs = model_ft(inputs)
 #print(outputs.data.shape)
-# Detect if we have a GPU available
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 params_to_update = model_ft.parameters()
@@ -275,7 +279,7 @@ optimizer_ft = optim.SGD(params_to_update, lr=0.001, momentum=0.9)
 
 # Setup the loss fxn
 criterion = nn.CrossEntropyLoss()
-num_epochs = 10
+num_epochs = 100
 model_name = "resnet"
 
 # Train and evaluate
