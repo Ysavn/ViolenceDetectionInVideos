@@ -262,8 +262,8 @@ if __name__ == '__main__':
     # Detect if we have a GPU available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model_ft, input_size = initialize_model(num_of_classes, feature_extract, True)
-    torch.cuda.set_device(device)
-    model_ft.cuda()
+    #torch.cuda.set_device(device)
+    #model_ft.cuda()
 
     params_to_update = model_ft.parameters()
     print("Params to learn:")
